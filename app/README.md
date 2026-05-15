@@ -30,6 +30,36 @@ pm2 logs backup-midia-externa
 
 Ajuste os parâmetros de backup em `config.js` conforme necessário.
 
+## Retenção de VMs por HD
+
+Você pode definir políticas de retenção diferentes para cada HD externo usando `UUIDS_HD_EXTERNOS_JSON` no `app/config.js`.
+Cada disco pode incluir um campo `retencao` com regras específicas:
+
+```json
+{
+  "uuid": "uuid-do-hd-1",
+  "alias": "HD-Backup-1",
+  "retencao": {
+    "DIAS": 30,
+    "ESPACO_MINIMO": 10737418240,
+    "EXCLUIR_ANTIGOS": true,
+    "MODO_DRY_RUN": false
+  }
+}
+```
+
+Se o disco não tiver `retencao`, a configuração padrão de `BACKUP_VMS.RETENCAO` será usada.
+
+## Simulação de retenção (dry-run)
+
+Para testar quais arquivos seriam rotacionados sem apagar nada, use:
+
+```bash
+BACKUP_VMS_RETENCAO_MODO_DRY_RUN=true
+```
+
+No modo `dry-run`, o script lista os arquivos que seriam excluídos sem removê-los.
+
 ## Boas práticas
 
 - Não comitar credenciais no repositório.

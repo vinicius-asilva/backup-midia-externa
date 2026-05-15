@@ -22,8 +22,9 @@ class MontagemHD {
         if (entry && typeof entry === 'object') {
             const uuid = typeof entry.uuid === 'string' ? entry.uuid.trim() : '';
             const alias = typeof entry.alias === 'string' ? entry.alias.trim() : '';
+            const retencao = entry.retencao && typeof entry.retencao === 'object' ? entry.retencao : null;
             if (!uuid) return null;
-            return { uuid, alias: alias || null };
+            return { uuid, alias: alias || null, retencao };
         }
 
         return null;

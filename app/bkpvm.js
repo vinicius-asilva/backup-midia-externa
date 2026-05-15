@@ -10,10 +10,23 @@ const { sendToZabbix } = require('./zabbix');
 
 class BackupVMs {
     constructor(config, logger) {
+        // Configuração padrão de VMs e referência ao config geral
         this.config = config.BACKUP_VMS;
         this.configGeral = config;
         this.logger = logger;
+
+        // Mantém as opções de retenção padrão para poder restaurar se necessário
+        this.retentaoDefault = { ...this.config.RETENCAO };
         this.gestorRetencao = new GestorRetencao(this.config.RETENCAO, logger, 'vms');
+    }
+
+    atualizarRetencao(retencaoConfig) {
+        // Atualiza apenas a retenção de VMs para este disco específico
+        this.config.RETENCAO = {
+            ...this.retentaoDefault,
+            ...(retencaoConfig || {})
+        };
+        this.gestorRetencao = new GestorRetencao(this.config.RETENCAO, this.logger, 'vms');
     }
 
     /**

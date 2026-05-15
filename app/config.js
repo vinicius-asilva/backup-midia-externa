@@ -100,11 +100,16 @@ module.exports = {
         TAMANHO_MAX_HASH_COMPLETO: envInt('BACKUP_VMS_TAMANHO_MAX_HASH_COMPLETO', 50 * 1024 * 1024 * 1024), // 50GB
         ATIVO: envBool('BACKUP_VMS_ATIVO', true),
 
-        // POLÍTICA DE RETENÇÃO
+        // POLÍTICA DE RETENÇÃO DE VMs
         RETENCAO: {
+            // Número de dias para manter arquivos antes de elegíveis à exclusão
             DIAS: envInt('BACKUP_VMS_RETENCAO_DIAS', 90),
+            // Espaço mínimo livre no destino para manter antes de excluir backups antigos
             ESPACO_MINIMO: envInt('BACKUP_VMS_RETENCAO_ESPACO_MINIMO', bytesFromGB(10)),
-            EXCLUIR_ANTIGOS: envBool('BACKUP_VMS_RETENCAO_EXCLUIR_ANTIGOS', true)
+            // Se true, arquivos mais antigos que DIAS serão removidos
+            EXCLUIR_ANTIGOS: envBool('BACKUP_VMS_RETENCAO_EXCLUIR_ANTIGOS', true),
+            // Se true, executa somente simulação de exclusões, sem apagar arquivos
+            MODO_DRY_RUN: envBool('BACKUP_VMS_RETENCAO_MODO_DRY_RUN', false)
         }
     }
 };

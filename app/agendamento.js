@@ -213,6 +213,12 @@ class AgendamentoBackup {
                     const backupDados = new BackupDados(config, logger);
                     const backupVMs = new BackupVMs(config, logger);
 
+                    // Se o disco atual tiver configuração de retenção própria, aplica apenas para o backup de VMs.
+                    if (disco.retencao && Object.keys(disco.retencao).length) {
+                        backupVMs.atualizarRetencao(disco.retencao);
+                        console.log(`🔧 Retenção de VMs customizada para disco ${uuid}${alias ? ` (${alias})` : ''}: ${JSON.stringify(disco.retencao)}`);
+                    }
+
                     const options = Number.isFinite(lastSuccessMs) ? { onlyNewerThanMs: lastSuccessMs } : {};
                     const resultados = {
                         dados: await backupDados.executar(options),

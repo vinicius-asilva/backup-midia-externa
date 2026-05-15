@@ -1,5 +1,9 @@
 /**
  * POLÍTICA DE RETENÇÃO DE BACKUPS
+ *
+ * Este módulo cuida apenas da rotação de arquivos já existentes no destino.
+ * A lógica de backup de VMs chama `gestorRetencao.aplicar()` antes de copiar
+ * novos arquivos, garantindo que a retenção seja avaliada previamente.
  */
 
 const fs = require('fs-extra');
@@ -154,8 +158,31 @@ class GestorRetencao {
          *  EXECUTAR EXCLUSÕES
          */
         for (const bkp of paraExcluir) {
+            const arquivoInfo = {
+                nome: bkp.nome,
+                idadeDias: bkp.idadeDias,
+                tamanho: bkp.tamanho
+            };
 
             if (this.config.MODO_DRY_RUN) {
+                // Modo de simulação: apenas registra quais arquivos seriam removidos.
+                console.log(`⚠️ [DRY-RUN] arquivo que seria excluído: ${bkp.caminho}`);
+                relatorio.excluidos++;
+                relatorio.espacoLiberado += bkp.tamanho;
+                relatorio.arquivos.push(arquivoInfo);
+
+                if (this.logger) {
+                    this.logger.addLogEntry(
+                        this.tipo,
+                        'RETENCAO',
+                        bkp.nome,
+                        `${(bkp.tamanho / (1024 ** 3)).toFixed(2)} GB`,
+                        'SIMULAÇÃO',
+                        'N/A',
+                        `Retenção em modo dry-run: arquivo não removido`
+                    );
+                }
+
                 continue;
             }
 
@@ -164,11 +191,7 @@ class GestorRetencao {
 
                 relatorio.excluidos++;
                 relatorio.espacoLiberado += bkp.tamanho;
-                relatorio.arquivos.push({
-                    nome: bkp.nome,
-                    idadeDias: bkp.idadeDias,
-                    tamanho: bkp.tamanho
-                });
+                relatorio.arquivos.push(arquivoInfo);
 
                 if (this.logger) {
                     this.logger.addLogEntry(
