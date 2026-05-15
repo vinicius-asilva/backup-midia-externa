@@ -1,4 +1,13 @@
 {
+  "name": "backup-midia-externa",
+  "version": "1.0.0",
+  "description": "Backup de mídia externa com agendamento PM2 e janela de execução restrita.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "vinicius-asilva",
+  "license": "MIT",
   "dependencies": {
     "child_process": "^1.0.2",
     "crypto": "^1.0.1",

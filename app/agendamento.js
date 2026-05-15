@@ -109,7 +109,22 @@ class AgendamentoBackup {
     /**
      * Executa backup completo
      */
+    estaDentroDoHorario() {
+        const agora = new Date();
+        const diaSemana = agora.getDay(); // 0 = Domingo, 1 = Segunda, ..., 5 = Sexta, 6 = Sábado
+        const minutosDoDia = agora.getHours() * 60 + agora.getMinutes();
+        const inicio = 7 * 60; // 07:00
+        const fim = 19 * 60; // 19:00
+
+        return diaSemana >= 1 && diaSemana <= 5 && minutosDoDia >= inicio && minutosDoDia < fim;
+    }
+
     async executarBackupCompleto() {
+        if (!this.estaDentroDoHorario()) {
+            console.log('⏳ Fora do horário de execução permitido. Backup só roda de segunda a sexta, das 07:00 às 19:00.');
+            return;
+        }
+
         // Evita execuções simultâneas
         if (this.emExecucao) {
             console.log('⚠️  Backup já em execução, aguardando...');
@@ -291,7 +306,7 @@ class AgendamentoBackup {
         console.log(`   🖥️  VMs: ${config.BACKUP_VMS.ORIGEM} → ${config.BACKUP_VMS.DESTINO}`);
         console.log('🚀 Use PM2 para gerenciar o processo: pm2 start agendamento.js --name backup-system');
 
-        // Executa imediatamente
+        // Executa imediatamente, se dentro do horário permitido
         this.executarBackupCompleto();
 
         // Agenda execuções periódicas
