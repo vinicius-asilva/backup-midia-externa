@@ -48,6 +48,20 @@ ZABBIX_HOST=pve
 BACKUP_DRY_RUN=false
 ```
 
+### Zabbix e Dry-run
+
+- `ZABBIX_SERVER`: IP ou hostname do servidor Zabbix usado por `zabbix_sender`.
+- `ZABBIX_HOST`: nome do host cadastrado no Zabbix que receberá os itens.
+- `BACKUP_DRY_RUN`: `true` habilita o modo de teste geral (não remove arquivos na retenção).
+
+Exemplo rápido (temporário na linha de comando):
+
+```bash
+BACKUP_DRY_RUN=true ZABBIX_SERVER=192.168.0.202 ZABBIX_HOST=pve pm2 restart backup-midia-externa
+```
+
+Coloque seu `.env` em `app/.env` (use `app/.env.example` como modelo).
+
 ## Retenção de VMs por HD
 
 Você pode definir políticas de retenção diferentes para cada HD externo usando `UUIDS_HD_EXTERNOS_JSON` no `app/config.js`.
