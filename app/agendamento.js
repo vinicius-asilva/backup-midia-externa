@@ -11,6 +11,7 @@ const config = require('./config');
 const fs = require('fs-extra');
 const path = require('path');
 const { getDataHoje, carregarEstado, salvarEstado } = require('./estado');
+const DAY_NAMES = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
 
 class AgendamentoBackup {
     constructor() {
@@ -131,7 +132,8 @@ class AgendamentoBackup {
     async executarBackupCompleto() {
         if (!this.estaDentroDoHorario()) {
             const schedule = this.config?.SCHEDULE || {};
-            const dias = Array.isArray(schedule.DIAS) && schedule.DIAS.length ? schedule.DIAS.join(', ') : '1,2,3,4,5';
+            const diasArr = Array.isArray(schedule.DIAS) && schedule.DIAS.length ? schedule.DIAS : [1,2,3,4,5];
+            const dias = diasArr.map(d => DAY_NAMES[d] || d).join(', ');
             const inicio = schedule.INICIO?.raw || '07:00';
             const fim = schedule.FIM?.raw || '18:00';
             console.log(`⏳ Fora do horário de execução permitido. Backup só roda nos dias [${dias}] entre ${inicio} e ${fim}.`);
