@@ -113,10 +113,19 @@ class AgendamentoBackup {
         const agora = new Date();
         const diaSemana = agora.getDay(); // 0 = Domingo, 1 = Segunda, ..., 5 = Sexta, 6 = Sábado
         const minutosDoDia = agora.getHours() * 60 + agora.getMinutes();
-        const inicio = 7 * 60; // 07:00
-        const fim = 19 * 60; // 19:00
 
-        return diaSemana >= 1 && diaSemana <= 5 && minutosDoDia >= inicio && minutosDoDia < fim;
+        const schedule = this.config?.SCHEDULE || {};
+        const diasPermitidos = Array.isArray(schedule.DIAS) && schedule.DIAS.length
+            ? schedule.DIAS
+            : [1, 2, 3, 4, 5];
+        const inicio = Number.isFinite(schedule.INICIO?.totalMinutes)
+            ? schedule.INICIO.totalMinutes
+            : 7 * 60;
+        const fim = Number.isFinite(schedule.FIM?.totalMinutes)
+            ? schedule.FIM.totalMinutes
+            : 18 * 60;
+
+        return diasPermitidos.includes(diaSemana) && minutosDoDia >= inicio && minutosDoDia < fim;
     }
 
     async executarBackupCompleto() {
@@ -305,8 +314,16 @@ class AgendamentoBackup {
      * Inicia agendamento automático
      */
     iniciar() {
+        const schedule = config.SCHEDULE || {};
+        const diasPermitidos = Array.isArray(schedule.DIAS) && schedule.DIAS.length
+            ? schedule.DIAS.join(', ')
+            : '1,2,3,4,5';
+        const inicio = schedule.INICIO?.raw || '07:00';
+        const fim = schedule.FIM?.raw || '18:00';
+
         console.log('💾 SISTEMA DE BACKUP MULTI-DIRETÓRIO INICIADO');
         console.log(`⏰ Verificando a cada ${config.CHECK_INTERVAL / 1000} segundos`);
+        console.log(`⏱️ Janela de execução: dias ${diasPermitidos}, ${inicio} - ${fim}`);
         console.log(`📂 Diretórios monitorados:`);
         console.log(`   📁 Dados: ${config.BACKUP_DADOS.ORIGEM} → ${config.BACKUP_DADOS.DESTINO}`);
         console.log(`   🖥️  VMs: ${config.BACKUP_VMS.ORIGEM} → ${config.BACKUP_VMS.DESTINO}`);

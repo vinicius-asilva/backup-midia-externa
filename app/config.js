@@ -3,6 +3,21 @@
  */
 
 const path = require('path');
+try {
+    require('dotenv').config();
+} catch (error) {
+    // dotenv não instalado ainda, continua usando process.env normalmente.
+}
+
+const DAY_NAME_MAP = {
+    domingo: 0, dom: 0, sunday: 0,
+    segunda: 1, seg: 1, monday: 1,
+    terça: 2, terca: 2, ter: 2, tuesday: 2,
+    quarta: 3, qua: 3, wednesday: 3,
+    quinta: 4, qui: 4, thursday: 4,
+    sexta: 5, sex: 5, friday: 5,
+    sábado: 6, sabado: 6, sab: 6, saturday: 6
+};
 
 function env(name, fallback) {
     const v = process.env[name];
@@ -41,6 +56,66 @@ function envJson(name, fallback) {
     }
 }
 
+function parseHorario(name, fallback) {
+    const raw = env(name, fallback);
+    const horario = String(raw).trim();
+    const match = horario.match(/^(\d{1,2})(?::(\d{2}))?$/);
+    let hour = 0;
+    let minute = 0;
+
+    if (match) {
+        hour = Math.max(0, Math.min(23, parseInt(match[1], 10)));
+        minute = match[2] ? Math.max(0, Math.min(59, parseInt(match[2], 10))) : 0;
+    }
+
+    return {
+        raw: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
+        hour,
+        minute,
+        totalMinutes: hour * 60 + minute
+    };
+}
+
+function parseDayToken(token) {
+    if (!token) return null;
+    const normalized = token.trim().toLowerCase();
+    const num = parseInt(normalized, 10);
+    if (!Number.isNaN(num) && num >= 0 && num <= 6) return num;
+    return DAY_NAME_MAP[normalized] ?? null;
+}
+
+function parseScheduleDays(name, fallback) {
+    const raw = env(name, fallback);
+    if (raw === null) return [1, 2, 3, 4, 5];
+    const tokens = String(raw)
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+    const dias = new Set();
+
+    for (const token of tokens) {
+        const rangeMatch = token.match(/^(.+)-(.+)$/);
+        if (rangeMatch) {
+            const start = parseDayToken(rangeMatch[1]);
+            const end = parseDayToken(rangeMatch[2]);
+            if (start !== null && end !== null) {
+                let current = start;
+                dias.add(current);
+                while (current !== end) {
+                    current = (current + 1) % 7;
+                    dias.add(current);
+                }
+            }
+            continue;
+        }
+
+        const day = parseDayToken(token);
+        if (day !== null) dias.add(day);
+    }
+
+    return Array.from(dias).sort((a, b) => a - b);
+}
+
 function bytesFromGB(gbFallback) {
     const gb = envInt('BACKUP_VMS_RETENCAO_ESPACO_MINIMO_GB', gbFallback);
     return gb * 1024 * 1024 * 1024;
@@ -49,6 +124,7 @@ function bytesFromGB(gbFallback) {
 const DESTINO_BASE = env('BACKUP_DESTINO_BASE', '/media/usbdiario');
 const LOG_DIR = env('BACKUP_LOG_DIR', '/dados/logs/');
 const ESTADO_PATH = env('BACKUP_ESTADO_PATH', path.join(LOG_DIR, 'backup_estado.json'));
+const DRY_RUN = envBool('BACKUP_DRY_RUN', false);
 
 const UUID_HD_EXTERNO = env('BACKUP_UUID_HD_EXTERNO', '');
 const UUIDS_HD_EXTERNOS_JSON = envJson('BACKUP_UUIDS_HD_EXTERNOS_JSON', null);
@@ -77,6 +153,13 @@ module.exports = {
     TAMANHO_MAX_HASH_COMPLETO: envInt('BACKUP_TAMANHO_MAX_HASH_COMPLETO', 10 * 1024 * 1024 * 1024), // 10GB
     TAMANHO_BLOCO_HASH: envInt('BACKUP_TAMANHO_BLOCO_HASH', 10 * 1024 * 1024), // 10MB
 
+    DRY_RUN,
+    SCHEDULE: {
+        DIAS: parseScheduleDays('BACKUP_SCHEDULE_DIAS', '1,2,3,4,5'),
+        INICIO: parseHorario('BACKUP_SCHEDULE_INICIO', '07:00'),
+        FIM: parseHorario('BACKUP_SCHEDULE_FIM', '18:00')
+    },
+
     // CONFIGURAÇÕES DE BACKUP DE DADOS
     BACKUP_DADOS: {
         ORIGEM: env('BACKUP_DADOS_ORIGEM', '/dados/backup/bacula/'),
@@ -94,9 +177,10 @@ module.exports = {
         DESTINO: env('BACKUP_VMS_DESTINO', path.join(DESTINO_BASE, 'vms')),
         NOME: env('BACKUP_VMS_NOME', 'Backup VMS'),
         DESCRICAO: env('BACKUP_VMS_DESCRICAO', 'Backup de máquinas virtuais'),
-        // Se preencher, copia apenas arquivos com essas extensoes/sufixos (case-insensitive).
+        // Por padrão, copia apenas arquivos de VM que terminam em .zst.
+        // Se preencher BACKUP_VMS_EXTENSOES, pode usar outros sufixos case-insensitive.
         // Ex.: ".vma.zst" ou ".qcow2" (separados por virgula)
-        EXTENSOES_PERMITIDAS: envList('BACKUP_VMS_EXTENSOES', []),
+        EXTENSOES_PERMITIDAS: envList('BACKUP_VMS_EXTENSOES', ['.zst']),
         TAMANHO_MAX_HASH_COMPLETO: envInt('BACKUP_VMS_TAMANHO_MAX_HASH_COMPLETO', 50 * 1024 * 1024 * 1024), // 50GB
         ATIVO: envBool('BACKUP_VMS_ATIVO', true),
 
@@ -109,7 +193,7 @@ module.exports = {
             // Se true, arquivos mais antigos que DIAS serão removidos
             EXCLUIR_ANTIGOS: envBool('BACKUP_VMS_RETENCAO_EXCLUIR_ANTIGOS', true),
             // Se true, executa somente simulação de exclusões, sem apagar arquivos
-            MODO_DRY_RUN: envBool('BACKUP_VMS_RETENCAO_MODO_DRY_RUN', false)
+            MODO_DRY_RUN: envBool('BACKUP_VMS_RETENCAO_MODO_DRY_RUN', DRY_RUN)
         }
     }
 };

@@ -28,7 +28,25 @@ pm2 logs backup-midia-externa
 
 ## Configuração
 
-Ajuste os parâmetros de backup em `config.js` conforme necessário.
+Ajuste os parâmetros de backup em `config.js` ou usando um arquivo `.env` na raiz de `app`.
+
+Use `.env.example` como base para criar seu `.env` local.
+
+Exemplo de variáveis:
+
+```bash
+BACKUP_DADOS_ORIGEM=/dados/backup/bacula/
+BACKUP_DADOS_DESTINO=/media/usbdiario/bacula
+BACKUP_VMS_ORIGEM=/mnt/dados/dump
+BACKUP_VMS_DESTINO=/media/usbdiario/vms
+BACKUP_VMS_EXTENSOES=.zst
+BACKUP_SCHEDULE_DIAS=segunda,terca,quarta,quinta,sexta
+BACKUP_SCHEDULE_INICIO=07:00
+BACKUP_SCHEDULE_FIM=18:00
+ZABBIX_SERVER=192.168.0.202
+ZABBIX_HOST=pve
+BACKUP_DRY_RUN=false
+```
 
 ## Retenção de VMs por HD
 
