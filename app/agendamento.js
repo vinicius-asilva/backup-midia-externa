@@ -130,7 +130,11 @@ class AgendamentoBackup {
 
     async executarBackupCompleto() {
         if (!this.estaDentroDoHorario()) {
-            console.log('⏳ Fora do horário de execução permitido. Backup só roda de segunda a sexta, das 07:00 às 19:00.');
+            const schedule = this.config?.SCHEDULE || {};
+            const dias = Array.isArray(schedule.DIAS) && schedule.DIAS.length ? schedule.DIAS.join(', ') : '1,2,3,4,5';
+            const inicio = schedule.INICIO?.raw || '07:00';
+            const fim = schedule.FIM?.raw || '18:00';
+            console.log(`⏳ Fora do horário de execução permitido. Backup só roda nos dias [${dias}] entre ${inicio} e ${fim}.`);
             return;
         }
 
