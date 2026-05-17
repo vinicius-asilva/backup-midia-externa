@@ -125,6 +125,8 @@ const DESTINO_BASE = env('BACKUP_DESTINO_BASE', '/media/usbdiario');
 const LOG_DIR = env('BACKUP_LOG_DIR', '/dados/logs/');
 const ESTADO_PATH = env('BACKUP_ESTADO_PATH', path.join(LOG_DIR, 'backup_estado.json'));
 const DRY_RUN = envBool('BACKUP_DRY_RUN', false);
+const ZABBIX_SERVER = env('ZABBIX_SERVER', '192.168.0.202');
+const ZABBIX_HOST = env('ZABBIX_HOST', 'pve');
 
 const UUID_HD_EXTERNO = env('BACKUP_UUID_HD_EXTERNO', '');
 const UUIDS_HD_EXTERNOS_JSON = envJson('BACKUP_UUIDS_HD_EXTERNOS_JSON', null);
@@ -154,6 +156,8 @@ module.exports = {
     TAMANHO_BLOCO_HASH: envInt('BACKUP_TAMANHO_BLOCO_HASH', 10 * 1024 * 1024), // 10MB
 
     DRY_RUN,
+    ZABBIX_SERVER,
+    ZABBIX_HOST,
     SCHEDULE: {
         DIAS: parseScheduleDays('BACKUP_SCHEDULE_DIAS', '1,2,3,4,5'),
         INICIO: parseHorario('BACKUP_SCHEDULE_INICIO', '07:00'),
